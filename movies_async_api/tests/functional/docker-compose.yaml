@@ -1,0 +1,42 @@
+version: '3.4'
+
+services:
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+    environment:
+      discovery.type: single-node
+    expose:
+      - 9200
+
+  redis:
+    image: redis:6.0.9
+
+  movies_async_api:
+    build:
+      context: ../..
+    image: movies_async_api_image
+    command: python3 main.py
+    depends_on:
+      - elastic
+      - redis
+    restart: always
+    environment:
+      ELASTIC_URL: "http://elastic:9200"
+      REDIS_HOST: redis
+    ports:
+      - 80:8000
+
+  tests:
+    image: movies_async_api_image
+    environment:
+      ELASTIC_HOST: elastic
+      REDIS_HOST: redis
+      API_URL: "http://movies_async_api:8000/"
+    entrypoint: >
+      sh -c "pip install -r tests/functional/requirements.txt
+      && python3 tests/functional/utils/wait_for_es.py
+      && python3 tests/functional/utils/wait_for_redis.py
+      && pytest tests/functional/src/test_film.py"
+    depends_on:
+      - movies_async_api

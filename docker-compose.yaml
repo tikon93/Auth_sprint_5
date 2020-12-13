@@ -1,0 +1,83 @@
+version: '3.4'
+
+x-movie: &movies
+  build:
+    context: ./movies_admin
+  depends_on:
+    - postgres
+  env_file:
+    - .env
+  environment:
+    POSTGRES_HOST: postgres
+
+services:
+
+  postgres:
+    build:
+      context: ./postgres
+    volumes:
+      - ./database:/var/lib/postgresql/data
+    restart: always
+    env_file:
+      - .env
+
+  movies-admin-init:
+    <<: *movies
+    command: sh -c "python manage.py collectstatic --noinput && python manage.py migrate && sleep 60000"
+    volumes:
+      - ./static:/opt/app/${DJANGO_STATIC_ROOT-staticfiles} # volume для статики
+
+  movies-admin:
+    <<: *movies
+    restart: always
+    ports:
+      - 81:8000
+    depends_on:
+      - movies-api-init
+    command: gunicorn movies.wsgi:application -b 0.0.0.0:8000 --capture-output --enable-stdio-inheritance --timeout 60
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+    environment:
+      discovery.type: single-node
+    ports:
+      - 9200:9200
+    volumes:
+      - ./elastic_data:/usr/share/elasticsearch/data
+
+  elastic_data_sync:
+    build:
+      context: ./postgres_to_es
+    depends_on:
+      - postgres
+      - elastic
+    restart: always
+    volumes:
+    - ./etl_state:/opt/app/${ETL_STATE_STORAGE_FOLDER}
+    env_file:
+      - .env
+    environment:
+      ELASTIC_URL: "http://elastic:9200"
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${ETL_DB_USER}
+      POSTGRES_PASSWORD: ${ETL_DB_PASSWORD}
+
+  movies_async_api:
+    build:
+      context: ./movies_async_api
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - elastic
+    restart: always
+    env_file:
+      - .env
+    environment:
+      ELASTIC_URL: "http://elastic:9200"
+      REDIS_HOST: redis
+    ports:
+      - 80:8000
+
+  redis:
+    image: redis:6.0.9
+    ports:
+      - 6379:6379
