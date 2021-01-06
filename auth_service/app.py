@@ -1,15 +1,15 @@
+import json
+
 from flask import Flask
+from flask import request, jsonify
 from flask_pydantic_spec import FlaskPydanticSpec
 
 from src.db import db
 from src.models.api import UserData, ChangePasswordData, SessionData
-from src.settings import POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST, POSTGRES_PASSWORD
-
-from flask import request, jsonify
-
-from src.services.user_management import create_user, change_password, validate_credentials
-from src.services.session_management import start_session, is_token_valid
 from src.models.data_models import EncryptedToken
+from src.services.session_management import start_session, is_token_valid
+from src.services.user_management import create_user, change_password, validate_credentials
+from src.settings import POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST, POSTGRES_PASSWORD
 
 app = Flask(__name__)
 api_spec = FlaskPydanticSpec("flask")
@@ -44,13 +44,12 @@ def start_session_handle():
 
     user_agent = request.headers.get('User-Agent')
     token = start_session(trusted_user, user_agent)
-    print(token)
-    return jsonify(token.as_serializable_dict())
+    return json.dumps(token.as_serializable_dict())
 
 
 @app.route('/session', methods=['GET'])
 def validate_token_handle():
-    session = SessionData(**request.json)
+    session = SessionData(**json.loads(request.data))
 
     token = EncryptedToken.from_serializable_dict(session.dict())
 
@@ -61,4 +60,4 @@ def validate_token_handle():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')

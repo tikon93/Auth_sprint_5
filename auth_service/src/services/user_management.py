@@ -5,7 +5,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 from src.db import db
-from src.models import User
+from src.models.data_models import User
 
 logger = logging.getLogger(__name__)
 ph = PasswordHasher()

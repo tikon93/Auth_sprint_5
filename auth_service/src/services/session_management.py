@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic.error_wrappers import ValidationError
 
 from src.db import redis_db, db
-from src.models import EncryptedToken, DecryptedToken, UserSignIn, User
+from src.models.data_models import EncryptedToken, DecryptedToken, UserSignIn, User
 from src.settings import TOKEN_LIFETIME_SEC
 from src.utils.encryption import decrypt_token, encrypt_token
 from src.utils.encryption import get_random_string

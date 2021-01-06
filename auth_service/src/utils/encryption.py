@@ -3,7 +3,7 @@ import string
 
 from Cryptodome.Cipher import AES
 
-from src.models import EncryptedToken
+from src.models.data_models import EncryptedToken
 from src.settings import AUTH_PRIVATE_KEY
 
 

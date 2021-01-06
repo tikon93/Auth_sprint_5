@@ -20,6 +20,8 @@ services:
     restart: always
     env_file:
       - .env
+    ports:
+      - 15432:5432
 
   movies-admin-init:
     <<: *movies
@@ -27,15 +29,15 @@ services:
     volumes:
       - ./static:/opt/app/${DJANGO_STATIC_ROOT-staticfiles} # volume для статики
 
-  movies-admin:
-    <<: *movies
-    restart: always
-    ports:
-      - 81:8000
-    depends_on:
-      - movies-api-init
-    command: gunicorn movies.wsgi:application -b 0.0.0.0:8000 --capture-output --enable-stdio-inheritance --timeout 60
-
+#  movies-admin:
+#    <<: *movies
+#    restart: always
+#    ports:
+#      - 81:8000
+#    depends_on:
+#      - movies-admin-init
+#    command: gunicorn movies.wsgi:application -b 0.0.0.0:8000 --capture-output --enable-stdio-inheritance --timeout 60
+#
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
     environment:
@@ -45,23 +47,23 @@ services:
     volumes:
       - ./elastic_data:/usr/share/elasticsearch/data
 
-  elastic_data_sync:
-    build:
-      context: ./postgres_to_es
-    depends_on:
-      - postgres
-      - elastic
-    restart: always
-    volumes:
-    - ./etl_state:/opt/app/${ETL_STATE_STORAGE_FOLDER}
-    env_file:
-      - .env
-    environment:
-      ELASTIC_URL: "http://elastic:9200"
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: ${ETL_DB_USER}
-      POSTGRES_PASSWORD: ${ETL_DB_PASSWORD}
-
+#  elastic_data_sync:
+#    build:
+#      context: ./postgres_to_es
+#    depends_on:
+#      - postgres
+#      - elastic
+#    restart: always
+#    volumes:
+#    - ./etl_state:/opt/app/${ETL_STATE_STORAGE_FOLDER}
+#    env_file:
+#      - .env
+#    environment:
+#      ELASTIC_URL: "http://elastic:9200"
+#      POSTGRES_HOST: postgres
+#      POSTGRES_USER: ${ETL_DB_USER}
+#      POSTGRES_PASSWORD: ${ETL_DB_PASSWORD}
+#
   movies_async_api:
     build:
       context: ./movies_async_api
@@ -74,8 +76,27 @@ services:
     environment:
       ELASTIC_URL: "http://elastic:9200"
       REDIS_HOST: redis
+      AUTH_ENABLED: 1
+      AUTH_CHECK_ENDPOINT: "http://auth_api:5000/session"
     ports:
       - 80:8000
+
+  auth_api:
+    build:
+      context: ./auth_service
+    command: python app.py
+    ports:
+      - 5000:5000
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      POSTGRES_AUTH_HOST: postgres
+      REDIS_HOST: redis
+
 
   redis:
     image: redis:6.0.9
