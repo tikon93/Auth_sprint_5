@@ -44,15 +44,12 @@ def start_session_handle():
 
     user_agent = request.headers.get('User-Agent')
     token = start_session(trusted_user, user_agent)
-    return json.dumps(token.as_serializable_dict())
+    return token.serialize()
 
 
 @app.route('/session', methods=['GET'])
 def validate_token_handle():
-    session = SessionData(**json.loads(request.data))
-
-    token = EncryptedToken.from_serializable_dict(session.dict())
-
+    token = EncryptedToken.from_bytes(request.data)
     if token is None or not is_token_valid(token):
         return "Invalid session", 401
 

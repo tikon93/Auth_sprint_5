@@ -3,7 +3,7 @@ import datetime
 import logging
 import uuid
 from dataclasses import dataclass, asdict
-
+import json
 from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -46,13 +46,17 @@ class EncryptedToken:
     digest: bytes
     token: bytes
 
-    def as_serializable_dict(self) -> dict:
-        return {k: base64.b64encode(v).decode("ascii") for k, v in asdict(self).items()}
+    def serialize(self) -> str:
+        str_dict = {k: base64.b64encode(v).decode("ascii") for k, v in asdict(self).items()}
+        dumped_string = json.dumps(str_dict)
+        return base64.b64encode(dumped_string.encode('ascii')).decode('ascii')  # ready-to-transfer string
 
     @classmethod
-    def from_serializable_dict(cls, data: dict):
+    def from_bytes(cls, data: bytes):
         try:
-            bytes_dict = {k: base64.b64decode(v) for k, v in data.items()}
+            message_bytes = base64.b64decode(data)
+            data_dict = json.loads(message_bytes.decode('ascii'))
+            bytes_dict = {k: base64.b64decode(v) for k, v in data_dict.items()}
             return cls(**bytes_dict)
         except Exception as e:
             logger.error(f"Token deserialization error: {type(e)} {e}")

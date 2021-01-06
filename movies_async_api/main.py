@@ -32,7 +32,6 @@ async def shutdown():
 
 
 if config.AUTH_ENABLED:
-    print("got config", config.AUTH_ENABLED)
     app.add_middleware(middleware.AuthMiddleware)
 
 app.include_router(film.router, prefix='/v1/film', tags=['film'])

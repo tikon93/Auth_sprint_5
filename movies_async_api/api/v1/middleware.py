@@ -1,13 +1,12 @@
-import json
+import logging
 from http import HTTPStatus
 
 from aiohttp import ClientSession
-from starlette.responses import Response
-from starlette.requests import Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from core.config import AUTH_CHECK_ENDPOINT
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +18,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             logger.debug("No token provided, impossible to authorize")
             return self.auth_failed()
 
-        try:
-            token = json.loads(token)
-        except json.decoder.JSONDecodeError:
-            logger.error("token loading failed")
-            return self.auth_failed()
-
-        async with ClientSession() as session, session.get(AUTH_CHECK_ENDPOINT, json=token) as response:
+        async with ClientSession() as session, session.get(AUTH_CHECK_ENDPOINT, data=token) as response:
             await response.read()
             if response.status != 200:
                 logging.error(f"Auth failed with code {response.status}")
