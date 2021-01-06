@@ -1,0 +1,6 @@
+psycopg2-binary==2.8.6
+python-decouple==3.3
+flask-sqlalchemy==2.4.4
+pycryptodomex==3.9.9
+flasgger==0.9.5
+argon2-cffi==20.1.0
