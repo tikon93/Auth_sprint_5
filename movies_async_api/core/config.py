@@ -23,3 +23,5 @@ DEFAULT_PER_PAGE = config('DEFAULT_PER_PAGE', default=20)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SLA_SERVICE_RESPONSE_MS = config('SLA_SERVICE_RESPONSE_MS', default=200)
+AUTH_ENABLED = config('AUTH_ENABLED', default=True, cast=bool)
+AUTH_CHECK_ENDPOINT = config("AUTH_CHECK_ENDPOINT", default='http://127.0.0.1:5000/session')

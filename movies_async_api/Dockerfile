@@ -12,6 +12,7 @@ COPY ./core ./core
 COPY ./db ./db
 COPY ./models ./models
 COPY ./services ./services
+COPY ./utils ./utils
 COPY ./tests ./tests
 COPY ./main.py .
 
