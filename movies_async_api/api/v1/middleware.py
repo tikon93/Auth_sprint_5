@@ -18,7 +18,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             logger.debug("No token provided, impossible to authorize")
             return self.auth_failed()
 
-        async with ClientSession() as session, session.get(AUTH_CHECK_ENDPOINT, data=token) as response:
+        async with ClientSession() as session, session.get(AUTH_CHECK_ENDPOINT, json={"token": token}) as response:
             await response.read()
             if response.status != 200:
                 logging.error(f"Auth failed with code {response.status}")
