@@ -5,10 +5,9 @@ from flask_pydantic_spec import FlaskPydanticSpec, Response, Request
 from src.db import db
 from src.utils.wrappers import check_auth
 from src.models.api import UserData, ChangePasswordData, SerializedToken, HistoryLog
-from src.models.data_models import EncryptedToken
 from src.services.session_management import start_session, is_session_valid, invalidate_session, get_login_history, \
     decrypt_and_validate_token
-from src.services.user_management import create_user, change_password, validate_credentials
+from src.services.user_management import create_user, change_password, validate_credentials, DuplicatedLoginException
 from src.settings import POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST, POSTGRES_PASSWORD
 
 app = Flask(__name__)
@@ -24,8 +23,11 @@ db.init_app(app)
 def create_user_handle():
 
     user_data = UserData(**request.json)
-    create_user(user_data.login, user_data.password)
-    return jsonify(text="User created")
+    try:
+        create_user(user_data.login, user_data.password)
+        return "User created"
+    except DuplicatedLoginException:
+        return "User already exists", 400
 
 
 @app.route('/user', methods=['PATCH'])
@@ -35,7 +37,7 @@ def change_password_handle():
     if not change_password(login=data.login, old_password=data.old_password, new_password=data.new_password):
         return "Invalid credentials", 401
 
-    return jsonify(text="Password changed")
+    return "Password changed"
 
 
 @app.route('/login', methods=['POST'])
@@ -63,8 +65,7 @@ def validate_session_handle():
 @app.route('/logout', methods=['POST'])
 @check_auth
 def end_session_handle():
-    token = EncryptedToken.deserialize(request.headers.get('Authorization'))
-    invalidate_session(token)
+    invalidate_session(request.headers.get('Authorization'))
     return "OK"
 
 
