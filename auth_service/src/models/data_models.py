@@ -1,9 +1,12 @@
 import base64
 import datetime
+import enum
+import json
 import logging
 import uuid
 from dataclasses import dataclass, asdict
-import json
+from typing import Union
+
 from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -25,6 +28,12 @@ class User(db.Model):
 
     def __repr__(self):
         return f'<User {self.login}>'
+
+
+class UserDeviceTypes(enum.Enum):
+    mobile = "mobile"
+    pc = "pc"
+    smart_tv = "smart_tv"
 
 
 class UserSignIn(db.Model):
@@ -52,8 +61,11 @@ class EncryptedToken:
         return base64.b64encode(dumped_string.encode('ascii')).decode('ascii')  # ready-to-transfer string
 
     @classmethod
-    def from_bytes(cls, data: bytes):
+    def deserialize(cls, data: Union[bytes, str]):
         try:
+            if isinstance(data, str):
+                data = data.encode("ascii")
+
             message_bytes = base64.b64decode(data)
             data_dict = json.loads(message_bytes.decode('ascii'))
             bytes_dict = {k: base64.b64decode(v) for k, v in data_dict.items()}
