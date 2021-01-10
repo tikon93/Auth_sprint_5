@@ -8,7 +8,9 @@ COPY ./requirements ./requirements
 RUN python -m pip install -r requirements/common.txt --no-cache-dir
 
 COPY ./src ./src
+COPY ./migrations ./migrations
 COPY ./app.py .
+COPY ./manage.py .
 
 EXPOSE 5000/tcp
 

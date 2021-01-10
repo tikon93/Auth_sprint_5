@@ -40,13 +40,13 @@ class UserDeviceTypes(enum.Enum):
 class UserSignIn(db.Model):
     __tablename__ = 'users_sign_in'
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
     logged_in_by = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     user_agent = db.Column(db.Text)
     user_device_type = db.Column(
         Enum(*[device_type.value for device_type in UserDeviceTypes], name="device_types_enum")
     )
+    __mapper_args__ = {'primary_key': [user_id, logged_in_by]}
 
     def __repr__(self):
         return f'<UserSignIn {self.user_id}:{self.logged_in_by}>'
