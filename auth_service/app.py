@@ -16,6 +16,7 @@ api = FlaskPydanticSpec("Auth")
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+api.register(app)
 db.init_app(app)
 
 
@@ -85,5 +86,4 @@ def get_login_history_handle():
 
 
 if __name__ == '__main__':
-    api.register(app)
     app.run(host='0.0.0.0')

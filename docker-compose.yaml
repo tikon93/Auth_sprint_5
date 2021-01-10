@@ -10,6 +10,19 @@ x-movie: &movies
   environment:
     POSTGRES_HOST: postgres
 
+x-auth: &auth
+  build:
+    context: ./auth_service
+  env_file:
+      - .env
+  depends_on:
+      - postgres
+      - redis
+  environment:
+      POSTGRES_AUTH_HOST: postgres
+      REDIS_HOST: redis
+
+
 services:
 
   postgres:
@@ -81,22 +94,16 @@ services:
     ports:
       - 80:8000
 
+  auth_api_init:
+    <<: *auth
+    command: python manage.py db upgrade
+
   auth_api:
-    build:
-      context: ./auth_service
-    command: python app.py
+    <<: *auth
+    command: gunicorn --bind 0.0.0.0:5000 app:app
     ports:
       - 5000:5000
-    env_file:
-      - .env
     restart: always
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      POSTGRES_AUTH_HOST: postgres
-      REDIS_HOST: redis
-
 
   redis:
     image: redis:6.0.9
