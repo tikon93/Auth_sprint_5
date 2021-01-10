@@ -11,10 +11,15 @@ from src.services.user_management import create_user, change_password, validate_
 from src.settings import POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST, POSTGRES_PASSWORD
 
 app = Flask(__name__)
-api = FlaskPydanticSpec("Auth")
+def after_handler(req, resp, err, _):
+    if err:
+        print(err)
+
+api = FlaskPydanticSpec("Auth", after=after_handler)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 
@@ -76,7 +81,10 @@ def get_login_history_handle():
     user_id = decrypt_and_validate_token(request.headers.get('Authorization')).user_id
     history_entries = get_login_history(user_id=user_id)
     return jsonify(log=[
-        {"user_agent": entry.user_agent, "login_time": entry.logged_in_by} for entry in history_entries
+        {
+            "user_agent": entry.user_agent,
+            "logged_in_at_ts": int(entry.logged_in_by.timestamp())
+        } for entry in history_entries
     ])
 
 

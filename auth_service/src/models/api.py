@@ -16,8 +16,17 @@ class ChangePasswordData(BaseModel):
 
 
 class HistoryEntry(BaseModel):
-    logged_in_at: datetime
+    logged_in_at_ts: int
     user_agent: str
+
+    class Config:
+        schema_extra = {
+            # provide an example
+            'example': {
+                'logged_in_at_ts': 1610267953,
+                'user_agent': 'PostmanRuntime/7.26.8',
+            }
+        }
 
 
 class HistoryLog(BaseModel):
