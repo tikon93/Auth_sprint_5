@@ -9,6 +9,7 @@ from typing import Union
 
 from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Enum
 
 from src.db import db
 
@@ -43,7 +44,9 @@ class UserSignIn(db.Model):
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
     logged_in_by = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     user_agent = db.Column(db.Text)
-    user_device_type = db.Column(db.String)
+    user_device_type = db.Column(
+        Enum(*[device_type.value for device_type in UserDeviceTypes], name="device_types_enum")
+    )
 
     def __repr__(self):
         return f'<UserSignIn {self.user_id}:{self.logged_in_by}>'
@@ -78,5 +81,3 @@ class DecryptedToken(BaseModel):
     user_id: uuid.UUID
     user_agent: str
     token_body: str
-
-
