@@ -62,8 +62,3 @@ def change_password(login: str, old_password: str, new_password: str) -> bool:
     user.password = ph.hash(new_password)
     db.session.commit()
     return True
-
-
-
-
-
