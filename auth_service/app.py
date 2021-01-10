@@ -11,11 +11,7 @@ from src.services.user_management import create_user, change_password, validate_
 from src.settings import POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST, POSTGRES_PASSWORD
 
 app = Flask(__name__)
-def after_handler(req, resp, err, _):
-    if err:
-        print(err)
-
-api = FlaskPydanticSpec("Auth", after=after_handler)
+api = FlaskPydanticSpec("Auth")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}'
